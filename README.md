@@ -39,7 +39,7 @@ se o sistema sabe dizer "não sei" e o quanto dá para confiar no LLM usado como
 
 ```mermaid
 flowchart LR
-    A[Planalto: 5 leis em HTML] --> B[Limpeza: remove texto revogado e anotações]
+    A[Texto atualizado das 5 leis<br/>dataset Hugging Face] --> B[Limpeza: remove anotações e dispositivos revogados]
     B --> C[Chunks por artigo]
     C --> D[BM25]
     C --> E[BGE-M3 embeddings]
@@ -68,8 +68,10 @@ flowchart LR
 
 ## Decisões de projeto
 
-- **Texto riscado removido.** Nas versões compiladas do Planalto, o texto revogado continua na página, só que riscado.
-  Sem filtrar, o RAG responderia com a lei antiga.
+- **Fonte versionada em vez de scraping.** O site do Planalto bloqueia acessos automatizados, inclusive do Kaggle.
+  Usar um dataset do Hugging Face com data de snapshot deixa o projeto reprodutível.
+- **Dispositivos revogados e vetados removidos.** No texto atualizado eles aparecem só como número + anotação
+  (ex.: `§ 3º (Revogado pela Lei...)`). O RAG nunca deve citar um artigo que não está mais em vigor.
 - **Chunk = artigo.** É a unidade natural da lei e permite avaliar o retrieval pelo artigo correto.
   Artigos longos (comuns na CLT) viram sub-chunks com o mesmo `artigo_id`.
 - **Busca híbrida.** O BM25 acerta termos exatos ("caução", "justa causa"); os embeddings acertam paráfrases
@@ -83,11 +85,19 @@ flowchart LR
 - O corpus cobre 5 leis e não inclui jurisprudência nem regulamentações.
 - **Projeto educacional, não é aconselhamento jurídico.**
 
+## Dados
+
+Texto atualizado das leis vindo do dataset
+[`wrpbr/legislacao-federal-brasileira`](https://huggingface.co/datasets/wrpbr/legislacao-federal-brasileira),
+mantido pelo [OKF Index](https://okfindex.com/legislation) a partir de Normas.leg.br (Senado Federal) e da Câmara dos
+Deputados, sob licença [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). O corpus final tem
+**1.152 artigos vigentes**: CDC 118, LGPD 73, Marco Civil 32, Lei do Inquilinato 89 e CLT 840.
+
 ## Como reproduzir (Kaggle, ~2h de GPU no total)
 
 | Notebook | O que faz | GPU |
 |---|---|---|
-| [`01_corpus_e_dataset`](notebooks/01_corpus_e_dataset.ipynb) | baixa e limpa as leis, monta os chunks e o dataset de avaliação | ~40 min |
+| [`01_corpus_e_dataset`](notebooks/01_corpus_e_dataset.ipynb) | carrega e limpa as leis, monta os chunks e o dataset de avaliação | ~40 min |
 | [`02_avaliacao_retrieval`](notebooks/02_avaliacao_retrieval.ipynb) | compara 5 métodos de busca e salva o índice para o app | ~20 min |
 | [`03_avaliacao_geracao`](notebooks/03_avaliacao_geracao.ipynb) | Sem RAG vs. RAG, juiz LLM e validação humana | ~1h30 |
 
