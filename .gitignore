@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Saídas locais dos notebooks (no Kaggle elas ficam em /kaggle/working)
+saida_0*/
+html/
+
+# Índice da demo: é grande e vem da saída do notebook 02
+app/data/
